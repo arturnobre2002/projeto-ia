@@ -3,13 +3,17 @@ import math
 
 class DecisionTree:
 
-    def __init__(self, X, y, threshold=1.0, max_depth=None): # Additional optional arguments can be added, but the default value needs to be provided
+    def __init__(self, X, y, threshold=1.0, max_depth=None,depth=0): # Additional optional arguments can be added, but the default value needs to be provided
         dataset_entropy=self.entropy(y)
         total=len(y)
-
+        
 
         if all(val == y[0] for val in y):
             self.label = y[0]
+            return
+        
+        if max_depth is not None and depth >= max_depth:
+            self.label = self.most_common(y)
             return
 
         melhor_attr = -1
@@ -25,6 +29,10 @@ class DecisionTree:
                 melhor_grupos = grupos
 
 
+        if melhor_ganho < threshold:
+            self.label = self.most_common(y)
+            return
+        
         self.attribute = melhor_attr
         self.branches = {}
 
@@ -35,20 +43,34 @@ class DecisionTree:
                 if X[i][melhor_attr] == valor:
                     sub_X.append(X[i])
                     sub_y.append(y[i])
-            self.branches[valor] = DecisionTree(sub_X, sub_y)
+            self.branches[valor] = DecisionTree(sub_X, sub_y, threshold, max_depth, depth + 1)
+
+
+        
 
     def predict(self, x): # (e.g. x = ['apple', 'green', 'circle'] -> 1 or -1)
-        # Implement this
-        pass
+        # Se estamos numa folha (tem atributo 'label')
+        if hasattr(self, 'label'):
+            return self.label
+
+        # Caso contrário, estamos num nó → usar atributo para decidir o caminho
+        valor = x[self.attribute]
+
+        # Se esse valor existe nos ramos → seguir para esse ramo
+        if valor in self.branches:
+            return self.branches[valor].predict(x)
+
+        # Valor nunca visto no treino → devolve classe padrão (ex: 1)
+        return 1
     
     def entropy(self,y):
-        n_bomb=0
-        n_fruit=0
+        n_fruit = 0
+        n_bomb = 0
         for val in y:
             if val == 1:
-                n_bomb += 1
-            else: 
                 n_fruit += 1
+            else:
+                n_bomb += 1
         
         prob_bomb=n_bomb/len(y)
         prob_fruit=n_fruit/len(y)
@@ -62,8 +84,24 @@ class DecisionTree:
 
         
         
-        entropy=-(prob_bomb*math.log2(prob_bomb)+prob_fruit*math.log2(prob_fruit))
+        entropy=-(prob_bomb*pbomb_log2+prob_fruit*pfruit_log2)
         return entropy
+    
+    def most_common(self,y):
+        n_fruit = 0
+        n_bomb = 0
+        for val in y:
+            if val == 1:
+                n_fruit += 1
+            else:
+                n_bomb += 1
+
+        if n_bomb>n_fruit:
+            return -1
+        else:
+            return 1
+
+
     
     def split_by_attribute(self, X, y, attr_index): #grupos de um atributo com attr_index p exemplo atrr_index=0 entao o atributo é o Nome
         groups = {}  # exemplo: {'circle': [lista de y], 'curved': [lista de y], ...}
@@ -91,5 +129,5 @@ class DecisionTree:
 
 def train_decision_tree(X, y):
     # Replace with your configuration
-    return DecisionTree(X, y)
+    return DecisionTree(X, y, threshold=0.7, max_depth=3)
 
