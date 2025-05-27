@@ -4,89 +4,90 @@ import math
 class DecisionTree:
 
     def __init__(self, X, y, threshold=1.0, max_depth=None,depth=0): # Additional optional arguments can be added, but the default value needs to be provided
-        dataset_entropy=self.entropy(y)
-        total=len(y)
+        dataset_entropy=self.entropy(y) # entropia do dataset
+        total=len(y) # tamanho do dataset
         
 
-        if all(val == y[0] for val in y):
-            self.label = y[0]
+        if all(val == y[0] for val in y): # se o dataset e homogeneo
+            self.leaf = y[0] # nasce uma folha com esse valor (1 ou -1)
             return
         
-        if max_depth is not None and depth >= max_depth:
-            self.label = self.most_common(y)
+        if max_depth is not None and depth >= max_depth: # se atingiu a max_depth
+            self.leaf = self.most_common(y) # poe uma folha com o valor mais comum (1 ou -1)
             return
 
-        melhor_attr = -1
-        melhor_ganho = -1
-        melhor_grupos = None
+        best_attr = -1 # melhor atributo vai ser o que tem maior ig
+        best_ig = -1 # melhor ig
+        best_groups = None # grupos do melhor atributo
 
-        for attr_index in range(len(X[0])):
-            grupos = self.split_by_attribute(X, y, attr_index)
-            ganho = self.information_gain(total, dataset_entropy, grupos)
-            if ganho >= melhor_ganho:
-                melhor_ganho = ganho
-                melhor_attr = attr_index
-                melhor_grupos = grupos
+        for attr_index in range(len(X[0])): # percorre as colunas de X, ou seja, os atributos
+            groups = self.split_by_attribute(X, y, attr_index) # vai buscar os grupos desse atributo
+            ig = self.information_gain(total, dataset_entropy, groups) # calcula o ig desse atributo
+            if ig >= best_ig: # se o ig for melhor que o ig do atributo anterior, atualiza
+                best_ig = ig
+                best_attr = attr_index
+                best_groups = groups
 
-
-        if melhor_ganho < threshold:
-            self.label = self.most_common(y)
+        # se o melhor ig for menor que o threshold (valor minimo de ig para esse atributo se tornar numa decisao)
+        if best_ig < threshold:
+            self.leaf = self.most_common(y) # adiciona uma folha com o valor mais comum e retorna
             return
         
-        self.attribute = melhor_attr
-        self.branches = {}
+        self.attribute = best_attr # se o ig for suficiente introduz o atributo na arvore 
+        self.branches = {} # inicializa um dicionario de ramos para esse atributo
 
-        for valor in melhor_grupos:
-            sub_X = []
+        for val in best_groups: # percorre o grupo desse atributo
+            sub_X = [] # para cada grupo vai buscar o subset respetivo
             sub_y = []
             for i in range(len(X)):
-                if X[i][melhor_attr] == valor:
+                if X[i][best_attr] == val:
                     sub_X.append(X[i])
                     sub_y.append(y[i])
-            self.branches[valor] = DecisionTree(sub_X, sub_y, threshold, max_depth, depth + 1)
+            self.branches[val] = DecisionTree(sub_X, sub_y, threshold, max_depth, depth + 1) # adiciona no dicionario de ramos do atributo um ramo em que o valor do grupo aponta para uma nova arvore de decisao que recebe o subset 
 
 
         
 
     def predict(self, x): # (e.g. x = ['apple', 'green', 'circle'] -> 1 or -1)
-        # Se estamos numa folha (tem atributo 'label')
-        if hasattr(self, 'label'):
-            return self.label
+        # o hasattr ve se tem atributo 'leaf', significa que estamos numa folha
+        if hasattr(self, 'leaf'):
+            return self.leaf
 
-        # Caso contrário, estamos num nó → usar atributo para decidir o caminho
-        valor = x[self.attribute]
+        # se nao, estamos num no. entao vai buscar o valor a x do atributo do no em que estamos. ex: se self.attribute=1 estamos no atributo cor e ele vai buscar 'green'
+        val = x[self.attribute]
 
-        # Se esse valor existe nos ramos → seguir para esse ramo
-        if valor in self.branches:
-            return self.branches[valor].predict(x)
+        # se o valor existe nos ramos faz uma chamada recursiva para esse ramo. isto acontece ate chegar a uma folha, ai devolve o valor da folha
+        if val in self.branches:
+            return self.branches[val].predict(x)
 
-        # Valor nunca visto no treino → devolve classe padrão (ex: 1)
+        # se o valor nunca foi visto no treino, devolve -1. no caso do nosso treino nunca vai acontecer
         return -1
     
+    # funcao auxiliar que calcula a entropia de um dado dataset
     def entropy(self,y):
-        n_fruit = 0
-        n_bomb = 0
+        n_fruit = 0 # contagem de frutas
+        n_bomb = 0 # contagem de bombas
         for val in y:
             if val == 1:
                 n_fruit += 1
             else:
                 n_bomb += 1
         
-        prob_bomb=n_bomb/len(y)
-        prob_fruit=n_fruit/len(y)
-        pbomb_log2=0
-        pfruit_log2=0
-        if prob_bomb>0:
-            pbomb_log2=math.log2(prob_bomb)
+        prob_bomb = n_bomb/len(y) # probabilidade de ser bomba
+        prob_fruit = n_fruit/len(y) # probabilidade de ser fruta
+        pbomb_log2 = 0
+        pfruit_log2 = 0
+        # evita fazer log2(0)
+        if prob_bomb > 0: 
+            pbomb_log2 = math.log2(prob_bomb)
 
-        if prob_fruit>0:
-            pfruit_log2=math.log2(prob_fruit)
+        if prob_fruit > 0:
+            pfruit_log2 = math.log2(prob_fruit)
 
         
-        
-        entropy=-(prob_bomb*pbomb_log2+prob_fruit*pfruit_log2)
+        entropy = -(prob_bomb * pbomb_log2 + prob_fruit * pfruit_log2)
         return entropy
-    
+    # funcao auxiliar para ver se ha mais bombas ou mais frutas num dataset. util para escolher folhas 
     def most_common(self,y):
         n_fruit = 0
         n_bomb = 0
@@ -96,30 +97,31 @@ class DecisionTree:
             else:
                 n_bomb += 1
 
-        if n_bomb>n_fruit:
+        if n_bomb > n_fruit:
             return -1
         else:
             return 1
 
 
     
-    def split_by_attribute(self, X, y, attr_index): #grupos de um atributo com attr_index p exemplo atrr_index=0 entao o atributo é o Nome
-        groups = {}  # exemplo: {'circle': [lista de y], 'curved': [lista de y], ...}
-        for i in range(len(X)):
-            val = X[i][attr_index]
-            if val not in groups:
+    def split_by_attribute(self, X, y, attr_index): # grupos de um atributo com attr_index p exemplo atrr_index=0 entao o atributo é o Nome
+        groups = {}  # ex: {'apple': [lista de y], 'orange': [lista de y], ...}
+        for i in range(len(X)): # percorre as linhas de X
+            val = X[i][attr_index] # vai buscar o valor a linha i do atributo com attr_index
+            if val not in groups: # se ainda nao registou o grupo, adiciona a groups
                 groups[val] = []
-            groups[val].append(y[i])
+            groups[val].append(y[i]) # adiciona y[i] (respetivo y) a lista de ys desse grupo
         return groups
     
-    def information_gain(self, total, dataset_entropy, groups): #grupos de um atributo
-        entropia_ponderada = 0
+    # funcao para calcular o ig de um atributo
+    def information_gain(self, total, dataset_entropy, groups): # groups = grupos de um atributo
+        weighted_entropy = 0 # weighted_entropy = (#s1/#dataset * entropy(s1) + ... + #si/#dataset * entropy(si)) # i = nr de valores/grupos de um atributo
         for group in groups:
             sub_y = groups[group]
-            peso = len(sub_y) / total
-            entropia_ponderada += peso * self.entropy(sub_y)
+            weight = len(sub_y) / total
+            weighted_entropy += weight * self.entropy(sub_y)
 
-        ig = dataset_entropy - entropia_ponderada
+        ig = dataset_entropy - weighted_entropy
         return ig
     
 
