@@ -31,11 +31,10 @@ def accuracy(y_true, y_pred):
     return sum(yt == yp for yt, yp in zip(y_true, y_pred)) / len(y_true)
 
 def main():
-    dt = train_fruit_classifier('train.csv')  # treina com seu método
+    dt = train_fruit_classifier('train.csv')  
     
-    X_test, y_test = load_test_dataset('test.csv')  # carrega teste
-
-    y_pred = [dt.predict(x) for x in X_test]  # prediz
+    X_test, y_test = load_test_dataset('test.csv')  
+    y_pred = [dt.predict(x) for x in X_test]  
 
     acc = accuracy(y_test, y_pred)
     print(f'Acurácia no conjunto de teste: {acc*100:.2f}%')
