@@ -61,7 +61,7 @@ class DecisionTree:
             return self.branches[valor].predict(x)
 
         # Valor nunca visto no treino → devolve classe padrão (ex: 1)
-        return 1
+        return -1
     
     def entropy(self,y):
         n_fruit = 0

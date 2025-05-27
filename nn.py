@@ -61,4 +61,4 @@ def create_network_architecture(input_size):
 
     hidden_fn = lambda x: 1 / (1 + np.exp(-x))
     output_fn = lambda x: 1 if x > 0 else -1
-    return NeuralNetwork(input_size, (), hidden_fn, output_fn) #so c 1 neuronio, input size vai ser o state size do main que é 10 para um hidden layer meter (N,)
+    return NeuralNetwork(input_size, (10,), hidden_fn, output_fn) #so c 1 neuronio, input size vai ser o state size do main que é 10 para um hidden layer meter (N,)
