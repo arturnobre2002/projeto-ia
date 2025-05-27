@@ -13,7 +13,15 @@ class NeuralNetwork:
 
     def compute_num_weights(self):
         # Implement this. Remember to account for the biases.
-        pass
+        total = 0
+        input_size = self.input_size
+
+        for n in self.hidden_architecture:
+            total += (input_size + 1) * n
+            input_size = n
+
+        total += (input_size + 1) * 1  # saída
+        return total
 
     def load_weights(self, weights):
         w = np.array(weights)
@@ -33,10 +41,18 @@ class NeuralNetwork:
         self.output_bias = w[start_w]
         self.output_weights = w[start_w+1:]
 
-
+    #A função nn.forward(state) devolve -1 ou 1 com base na entrada state, que representa o estado do jogo.
+    #state = np.array([cesta_x,item1_x, item1_y, item1_tipo, item2_x, item2_y, item2_tipo, item3_x, item3_y, item3_tipo])
+    #-1 esquerda 1 direita serve para ver para onde mover o cesto
     def forward(self, x):
-        # Implement this
-        pass
+        x = np.array(x)
+        for i in range(len(self.hidden_architecture)):
+            W = self.hidden_weights[i]
+            b = self.hidden_biases[i]
+            x = self.hidden_activation(np.dot(x, W) + b)
+
+        y = np.dot(x, self.output_weights) + self.output_bias
+        return self.output_activation(y)
         
 
 def create_network_architecture(input_size):
@@ -45,4 +61,4 @@ def create_network_architecture(input_size):
 
     hidden_fn = lambda x: 1 / (1 + np.exp(-x))
     output_fn = lambda x: 1 if x > 0 else -1
-    return NeuralNetwork(input_size, (), hidden_fn, output_fn)
+    return NeuralNetwork(input_size, (), hidden_fn, output_fn) #so c 1 neuronio, input size vai ser o state size do main que é 10 para um hidden layer meter (N,)
