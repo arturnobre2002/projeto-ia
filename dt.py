@@ -1,95 +1,78 @@
 import numpy as np
-import math
+from collections import Counter
+
+def entropy(y):
+    total = len(y)
+    counts = Counter(y)
+    return -sum((c / total) * np.log2(c / total) for c in counts.values())
+
+def information_gain(y, x_column):
+    values = set(x_column)
+    total = len(y)
+    weighted_entropy = 0
+    for v in values:
+        subset_y = [label for i, label in enumerate(y) if x_column[i] == v]
+        weighted_entropy += (len(subset_y) / total) * entropy(subset_y)
+    return entropy(y) - weighted_entropy
+
+def majority_class(y):
+    return Counter(y).most_common(1)[0][0]
+
+class Node:
+    def __init__(self, feature=None, branches=None, leaf_label=None):
+        self.feature = feature
+        self.branches = branches
+        self.leaf_label = leaf_label
+
+    def is_leaf(self):
+        return self.leaf_label is not None
+
+    def predict(self, x, feature_names):
+        if self.is_leaf():
+            return self.leaf_label
+        feature_value = x[feature_names.index(self.feature)]
+        if feature_value in self.branches:
+            return self.branches[feature_value].predict(x, feature_names)
+        else:
+            return majority_class([branch.leaf_label for branch in self.branches.values() if branch.is_leaf()])
 
 class DecisionTree:
+    def __init__(self, X, y, threshold=1.0, max_depth=None):
+        self.feature_names = ['name', 'color', 'format']
+        self.tree = self.build_tree(X, y, self.feature_names, threshold, max_depth)
 
-    def __init__(self, X, y, threshold=1.0, max_depth=None): # Additional optional arguments can be added, but the default value needs to be provided
-        dataset_entropy=self.entropy(y)
-        total=len(y)
+    def build_tree(self, X, y, feature_names, threshold, max_depth, depth=0):
+        if not y or len(set(y)) == 1 or (max_depth is not None and depth >= max_depth):
+            return Node(leaf_label=majority_class(y))
 
+        best_gain = 0
+        best_feature = None
+        for i, feature in enumerate(feature_names):
+            x_column = [row[i] for row in X]
+            gain = information_gain(y, x_column)
+            print(f'Feature: {feature}, Info Gain: {gain:.4f}')  # DEBUG
 
-        if all(val == y[0] for val in y):
-            self.label = y[0]
-            return
+            if gain > best_gain:
+                best_gain = gain
+                best_feature = feature
 
-        melhor_attr = -1
-        melhor_ganho = -1
-        melhor_grupos = None
+        if best_gain < threshold or best_feature is None:
+            return Node(leaf_label=majority_class(y))
 
-        for attr_index in range(len(X[0])):
-            grupos = self.split_by_attribute(X, y, attr_index)
-            ganho = self.information_gain(total, dataset_entropy, grupos)
-            if ganho >= melhor_ganho:
-                melhor_ganho = ganho
-                melhor_attr = attr_index
-                melhor_grupos = grupos
+        best_index = feature_names.index(best_feature)
+        branches = {}
+        values = set(row[best_index] for row in X)
+        for val in values:
+            sub_X = [row for row in X if row[best_index] == val]
+            sub_y = [y[i] for i, row in enumerate(X) if row[best_index] == val]
+            new_features = feature_names[:best_index] + feature_names[best_index+1:]
+            sub_X = [[v for j, v in enumerate(row) if j != best_index] for row in sub_X]
+            branches[val] = self.build_tree(sub_X, sub_y, new_features, threshold, max_depth, depth + 1)
 
+        return Node(feature=best_feature, branches=branches)
 
-        self.attribute = melhor_attr
-        self.branches = {}
-
-        for valor in melhor_grupos:
-            sub_X = []
-            sub_y = []
-            for i in range(len(X)):
-                if X[i][melhor_attr] == valor:
-                    sub_X.append(X[i])
-                    sub_y.append(y[i])
-            self.branches[valor] = DecisionTree(sub_X, sub_y)
-
-    def predict(self, x): # (e.g. x = ['apple', 'green', 'circle'] -> 1 or -1)
-        # Implement this
-        pass
-    
-    def entropy(self,y):
-        n_bomb=0
-        n_fruit=0
-        for val in y:
-            if val == 1:
-                n_bomb += 1
-            else: 
-                n_fruit += 1
-        
-        prob_bomb=n_bomb/len(y)
-        prob_fruit=n_fruit/len(y)
-        pbomb_log2=0
-        pfruit_log2=0
-        if prob_bomb>0:
-            pbomb_log2=math.log2(prob_bomb)
-
-        if prob_fruit>0:
-            pfruit_log2=math.log2(prob_fruit)
-
-        
-        
-        entropy=-(prob_bomb*math.log2(prob_bomb)+prob_fruit*math.log2(prob_fruit))
-        return entropy
-    
-    def split_by_attribute(self, X, y, attr_index): #grupos de um atributo com attr_index p exemplo atrr_index=0 entao o atributo é o Nome
-        groups = {}  # exemplo: {'circle': [lista de y], 'curved': [lista de y], ...}
-        for i in range(len(X)):
-            val = X[i][attr_index]
-            if val not in groups:
-                groups[val] = []
-            groups[val].append(y[i])
-        return groups
-    
-    def information_gain(self, total, dataset_entropy, groups): #grupos de um atributo
-        entropia_ponderada = 0
-        for group in groups:
-            sub_y = groups[group]
-            peso = len(sub_y) / total
-            entropia_ponderada += peso * self.entropy(sub_y)
-
-        ig = dataset_entropy - entropia_ponderada
-        return ig
-    
-
-
-
-
+    def predict(self, x):
+        return self.tree.predict(x, self.feature_names)
 
 def train_decision_tree(X, y):
-    # Replace with your configuration
-    return DecisionTree(X, y)
-
+    return DecisionTree(X, y, threshold=0.01, max_depth=5)
