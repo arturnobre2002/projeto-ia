@@ -39,7 +39,7 @@ def mutate(individual, mutation_rate):
 def genetic_algorithm(individual_size, population_size, fitness_function, target_fitness, generations, elite_rate=0.2, mutation_rate=0.05):
     population = generate_population(individual_size, population_size)
     best_individual = None
-    #debater este código
+    
     for gen in range(generations):
         scored = [(ind, fitness_function(ind)) for ind in population]
         scored.sort(key=lambda x: x[1], reverse=True)
@@ -63,4 +63,3 @@ def genetic_algorithm(individual_size, population_size, fitness_function, target
 
     return best_individual # This is expected to be a pair (individual, fitness)
 
-#vr do ficheiro best_individuals.txt dps guardar a melhor geração

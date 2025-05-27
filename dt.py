@@ -129,5 +129,5 @@ class DecisionTree:
 
 def train_decision_tree(X, y):
     # Replace with your configuration
-    return DecisionTree(X, y, threshold=0.7, max_depth=3)
+    return DecisionTree(X, y, threshold=0.1, max_depth=None)
 
