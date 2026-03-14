@@ -35,4 +35,4 @@ Certifica-te de que tens o `pygame` e o `numpy` instalados.
     ```
 
 ---
-*Realizado por: Joana Guerra, nº 122712 e Artur Nobre, nº 99087
+* Realizado por: Joana Guerra, nº 122712 e Artur Nobre, nº 99087
