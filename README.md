@@ -1,6 +1,6 @@
 # Fruit Catcher AI
 
-[cite_start] Projeto desenvolvido para a UC de Inteligência Artificial (2024/25) no ISCTE. O objetivo é controlar uma cesta para apanhar frutas e evitar bombas disfarçadas de frutas utilizando agentes inteligentes.
+Projeto desenvolvido para a UC de Inteligência Artificial (2024/25) no ISCTE. O objetivo é controlar uma cesta para apanhar frutas e evitar bombas disfarçadas de frutas utilizando agentes inteligentes.
 
 ## O que é o projeto?
 O projeto utiliza duas técnicas principais de IA para automatizar o jogo:
